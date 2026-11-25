@@ -47,6 +47,14 @@ class SchemaProbeEntityTest {
         assertThat(loaded.getAmount()).isEqualByComparingTo("400.0000");
         assertThat(loaded.getRate()).isEqualByComparingTo("0.2000");
         assertThat(loaded.getQuantity()).isEqualByComparingTo("18.0000");
+
+        // Scale preservation matters as much as value equality: DECIMAL(x,4) columns
+        // must come back with exactly 4 decimal places, or money arithmetic downstream
+        // silently loses precision. equals() on BigDecimal is scale-sensitive, which
+        // is exactly what we want here.
+        assertThat(loaded.getAmount().scale()).isEqualTo(4);
+        assertThat(loaded.getRate().scale()).isEqualTo(4);
+        assertThat(loaded.getQuantity().scale()).isEqualTo(4);
         assertThat(loaded.isActiveFlag()).isTrue();
         assertThat(loaded.getCreatedAt()).isNotNull();
         assertThat(loaded.getPayload()).containsEntry("source", "phase-01-probe");

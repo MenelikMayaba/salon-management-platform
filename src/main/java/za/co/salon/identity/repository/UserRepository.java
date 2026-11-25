@@ -1,0 +1,13 @@
+package za.co.salon.identity.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import za.co.salon.identity.entity.User;
+
+import java.util.Optional;
+
+public interface UserRepository extends JpaRepository<User, Long> {
+
+    Optional<User> findByEmail(String email);
+
+    boolean existsByEmail(String email);
+}
