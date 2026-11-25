@@ -11,7 +11,7 @@ Multi-tenant salon management system: sales, payments, inventory, commissions, a
 | Schema | Hibernate `ddl-auto` (`update` dev → `validate` prod) |
 | Auth | Spring Security + JWT; layered authorization (`@PreAuthorize` + `BusinessAuthorizationService` + row checks) |
 | Config | `application.properties` |
-| Tests | JUnit 5, Mockito, Testcontainers **MySQL** (never H2) |
+| Tests | JUnit 5, Mockito, integration tests against `sms_test` on local MySQL (never H2) |
 | Frontend | Angular + TypeScript |
 
 ## Documentation
