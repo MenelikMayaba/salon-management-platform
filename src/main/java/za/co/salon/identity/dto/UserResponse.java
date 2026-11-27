@@ -1,5 +1,9 @@
 package za.co.salon.identity.dto;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 public class UserResponse {
 
     private Long id;
@@ -14,19 +18,4 @@ public class UserResponse {
         this.email = email;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public String getEmail() {
-        return email;
-    }
 }

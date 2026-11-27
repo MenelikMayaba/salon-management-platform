@@ -12,6 +12,8 @@ import org.hibernate.type.SqlTypes;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Map;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Proves the schema-contract type mappings before they are replicated across the
@@ -21,6 +23,8 @@ import java.util.Map;
  */
 @Entity
 @Table(name = "schema_probe")
+@Getter
+@Setter
 public class SchemaProbeEntity {
 
     @Id
@@ -51,54 +55,6 @@ public class SchemaProbeEntity {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "json")
     private Map<String, Object> payload;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public BigDecimal getAmount() {
-        return amount;
-    }
-
-    public void setAmount(BigDecimal amount) {
-        this.amount = amount;
-    }
-
-    public BigDecimal getRate() {
-        return rate;
-    }
-
-    public void setRate(BigDecimal rate) {
-        this.rate = rate;
-    }
-
-    public BigDecimal getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(BigDecimal quantity) {
-        this.quantity = quantity;
-    }
-
-    public boolean isActiveFlag() {
-        return activeFlag;
-    }
-
-    public void setActiveFlag(boolean activeFlag) {
-        this.activeFlag = activeFlag;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
 
     public Map<String, Object> getPayload() {
         return payload;

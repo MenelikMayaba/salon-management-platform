@@ -12,6 +12,8 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Opaque refresh token, stored as a SHA-256 hash so a database leak does not
@@ -19,6 +21,8 @@ import java.time.Instant;
  */
 @Entity
 @Table(name = "refresh_tokens", indexes = @Index(name = "idx_refresh_tokens_user", columnList = "user_id"))
+@Getter
+@Setter
 public class RefreshToken {
 
     @Id
@@ -46,47 +50,4 @@ public class RefreshToken {
         this.createdAt = Instant.now();
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
-    public String getTokenHash() {
-        return tokenHash;
-    }
-
-    public void setTokenHash(String tokenHash) {
-        this.tokenHash = tokenHash;
-    }
-
-    public Instant getExpiresAt() {
-        return expiresAt;
-    }
-
-    public void setExpiresAt(Instant expiresAt) {
-        this.expiresAt = expiresAt;
-    }
-
-    public boolean isRevoked() {
-        return revoked;
-    }
-
-    public void setRevoked(boolean revoked) {
-        this.revoked = revoked;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
 }

@@ -14,6 +14,8 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Connects users to businesses (blueprint 3.1). The user's role lives here,
@@ -24,6 +26,8 @@ import java.time.Instant;
 @Entity
 @Table(name = "business_members",
         uniqueConstraints = @UniqueConstraint(name = "uk_business_members_pair", columnNames = {"business_id", "user_id"}))
+@Getter
+@Setter
 public class BusinessMember {
 
     public enum Role {
@@ -65,47 +69,4 @@ public class BusinessMember {
         this.joinedAt = Instant.now();
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getBusinessId() {
-        return businessId;
-    }
-
-    public void setBusinessId(Long businessId) {
-        this.businessId = businessId;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
-    public Role getRole() {
-        return role;
-    }
-
-    public void setRole(Role role) {
-        this.role = role;
-    }
-
-    public Status getStatus() {
-        return status;
-    }
-
-    public void setStatus(Status status) {
-        this.status = status;
-    }
-
-    public Instant getJoinedAt() {
-        return joinedAt;
-    }
 }

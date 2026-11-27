@@ -1,5 +1,9 @@
 package za.co.salon.identity.dto;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 public class AuthResponse {
 
     private String accessToken;
@@ -12,15 +16,4 @@ public class AuthResponse {
         this.user = user;
     }
 
-    public String getAccessToken() {
-        return accessToken;
-    }
-
-    public String getRefreshToken() {
-        return refreshToken;
-    }
-
-    public UserResponse getUser() {
-        return user;
-    }
 }
