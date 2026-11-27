@@ -9,6 +9,7 @@ import za.co.salon.business.dto.BusinessRequest;
 import za.co.salon.business.dto.BusinessResponse;
 import za.co.salon.business.dto.MemberResponse;
 import za.co.salon.business.entity.Business;
+import za.co.salon.business.onboarding.BusinessOnboardingHandler;
 import za.co.salon.business.entity.BusinessMember;
 import za.co.salon.business.repository.BusinessMemberRepository;
 import za.co.salon.business.repository.BusinessRepository;
@@ -32,17 +33,20 @@ public class BusinessService {
     private final UserRepository userRepository;
     private final BusinessAuthorizationService authz;
     private final BusinessContext businessContext;
+    private final List<BusinessOnboardingHandler> onboardingHandlers;
 
     public BusinessService(BusinessRepository businessRepository,
                            BusinessMemberRepository memberRepository,
                            UserRepository userRepository,
                            BusinessAuthorizationService authz,
-                           BusinessContext businessContext) {
+                           BusinessContext businessContext,
+                           List<BusinessOnboardingHandler> onboardingHandlers) {
         this.businessRepository = businessRepository;
         this.memberRepository = memberRepository;
         this.userRepository = userRepository;
         this.authz = authz;
         this.businessContext = businessContext;
+        this.onboardingHandlers = onboardingHandlers;
     }
 
     /**
@@ -62,6 +66,12 @@ public class BusinessService {
         membership.setRole(BusinessMember.Role.OWNER);
         membership.setStatus(BusinessMember.Status.ACTIVE);
         memberRepository.save(membership);
+
+        // Onboarding (chart of accounts, sequence counters) runs in this same
+        // transaction: if seeding fails, the business creation rolls back too.
+        for (BusinessOnboardingHandler handler : onboardingHandlers) {
+            handler.onBusinessCreated(business);
+        }
 
         return toResponse(business);
     }
