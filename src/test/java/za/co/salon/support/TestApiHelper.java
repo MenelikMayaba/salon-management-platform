@@ -6,6 +6,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 /**
@@ -74,6 +75,20 @@ public class TestApiHelper {
             throw new IllegalStateException("addMember failed: " + result.getResponse().getStatus()
                     + " " + result.getResponse().getContentAsString());
         }
+    }
+
+    /**
+     * Resolves the user id for a token by reading the member list of a
+     * throwaway business created for that user. Uses only public API.
+     */
+    public long userIdOf(String accessToken) throws Exception {
+        createBusiness(accessToken, "IdProbe " + System.nanoTime());
+        MvcResult result = mockMvc.perform(get("/api/v1/businesses/current/members")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andReturn();
+        JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
+        JsonNode members = json.isArray() ? json : json.get("content");
+        return members.get(0).get("userId").asLong();
     }
 
     /**
