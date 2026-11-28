@@ -96,7 +96,12 @@ class SaleCompletionRollbackIntegrationTest {
     }
 
     private void seedStock(long businessId, long productId, String quantity, String averageCost) {
-        ProductStockBalance balance = new ProductStockBalance();
+        // Product creation now inserts the zero balance row (blueprint 3.6), so
+        // seeding stock means UPDATING that row - inserting would violate the
+        // one-balance-per-product unique constraint.
+        ProductStockBalance balance = balanceRepository
+                .findByBusinessIdAndProductId(businessId, productId)
+                .orElseGet(ProductStockBalance::new);
         balance.setBusinessId(businessId);
         balance.setProductId(productId);
         balance.setQuantityOnHand(new BigDecimal(quantity));

@@ -253,10 +253,23 @@ public class SaleService {
         }
 
         // Product quantities grouped in sorted product-id order - deterministic
-        // lock ordering for concurrent completions.
+        // lock ordering for concurrent completions. Products with
+        // track_inventory=false never deduct and never error for missing stock
+        // (blueprint 3.3) - they are excluded here, before any locking happens.
         java.util.TreeMap<Long, BigDecimal> quantitiesByProduct = new java.util.TreeMap<>();
+        java.util.Set<Long> productIds = new java.util.HashSet<>();
         for (SaleItem item : items) {
             if (item.getItemType() == SaleItem.ItemType.PRODUCT) {
+                productIds.add(item.getProductId());
+            }
+        }
+        java.util.Map<Long, Boolean> trackingByProduct = new java.util.HashMap<>();
+        for (za.co.salon.catalogue.entity.Product product : productRepository.findAllById(productIds)) {
+            trackingByProduct.put(product.getId(), product.isTrackInventory());
+        }
+        for (SaleItem item : items) {
+            if (item.getItemType() == SaleItem.ItemType.PRODUCT
+                    && Boolean.TRUE.equals(trackingByProduct.get(item.getProductId()))) {
                 quantitiesByProduct.merge(item.getProductId(), item.getQuantity(), BigDecimal::add);
             }
         }

@@ -8,4 +8,6 @@ import java.util.List;
 public interface InventoryMovementRepository extends JpaRepository<InventoryMovement, Long> {
 
     List<InventoryMovement> findAllByReferenceTypeAndReferenceId(String referenceType, Long referenceId);
+
+    List<InventoryMovement> findAllByBusinessIdAndProductIdOrderByIdDesc(Long businessId, Long productId);
 }

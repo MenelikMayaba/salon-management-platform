@@ -29,7 +29,7 @@ import java.time.Instant;
 public class InventoryMovement implements BusinessScoped {
 
     public enum MovementType {
-        SALE, PURCHASE_RECEIPT, CUSTOMER_RETURN, ADJUSTMENT
+        SALE, PURCHASE_RECEIPT, CUSTOMER_RETURN, STOCK_ADJUSTMENT, DAMAGE, OPENING_BALANCE
     }
 
     @Id
@@ -57,6 +57,9 @@ public class InventoryMovement implements BusinessScoped {
     private String referenceType;
 
     private Long referenceId;
+
+    @Column(length = 500)
+    private String note;
 
     private Long createdBy;
 

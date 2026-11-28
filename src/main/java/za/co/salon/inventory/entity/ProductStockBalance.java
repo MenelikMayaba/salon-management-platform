@@ -33,7 +33,9 @@ public class ProductStockBalance implements BusinessScoped {
     @Column(nullable = false)
     private Long businessId;
 
-    @Column(nullable = false)
+    // Blueprint 3.6: one balance row per product is a load-bearing invariant -
+    // the FOR UPDATE lock serialization depends on exactly one row existing.
+    @Column(nullable = false, unique = true)
     private Long productId;
 
     @Column(nullable = false, precision = 12, scale = 4)

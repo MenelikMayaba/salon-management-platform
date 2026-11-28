@@ -13,6 +13,8 @@ public interface ProductStockBalanceRepository extends JpaRepository<ProductStoc
 
     Optional<ProductStockBalance> findByBusinessIdAndProductId(Long businessId, Long productId);
 
+    java.util.List<ProductStockBalance> findAllByBusinessId(Long businessId);
+
     /**
      * SELECT ... FOR UPDATE on the balance row - the serialization point that
      * makes concurrent stock movements correct (blueprint 3.6).

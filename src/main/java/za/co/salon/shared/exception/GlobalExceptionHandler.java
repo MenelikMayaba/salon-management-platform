@@ -34,6 +34,26 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
     }
 
+    /**
+     * Unmapped paths resolve through the resource chain as NoResourceFoundException.
+     * Without this handler the catch-all below swallows it as a 500 - every typo'd
+     * URL reporting a server error instead of the honest 404.
+     */
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleNoResource(org.springframework.web.servlet.resource.NoResourceFoundException exception) {
+        Map<String, Object> body = baseBody("NOT_FOUND", "Resource not found");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+    }
+
+    /**
+     * Mapped path, wrong method - 405, not the catch-all's 500.
+     */
+    @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<Map<String, Object>> handleMethodNotSupported(org.springframework.web.HttpRequestMethodNotSupportedException exception) {
+        Map<String, Object> body = baseBody("METHOD_NOT_ALLOWED", exception.getMessage());
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(body);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException exception) {
         StringBuilder message = new StringBuilder("Validation failed: ");

@@ -37,6 +37,88 @@ public class InventoryService {
     }
 
     /**
+     * Manual adjustment: found stock, damage, opening corrections. The average
+     * cost never changes - stock moves at the current average. Negative results
+     * are rejected: the REJECT negative-stock policy is the default (section 12).
+     */
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void recordAdjustment(Long businessId, Long productId, BigDecimal quantityChange,
+                                 InventoryMovement.MovementType movementType, String reason, Long createdByUserId) {
+        if (movementType != InventoryMovement.MovementType.STOCK_ADJUSTMENT
+                && movementType != InventoryMovement.MovementType.DAMAGE) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Adjustments must be STOCK_ADJUSTMENT or DAMAGE, not " + movementType);
+        }
+        ProductStockBalance balance = balanceRepository.findForUpdate(businessId, productId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                        "No stock balance row for product " + productId));
+        BigDecimal newQuantity = balance.getQuantityOnHand().add(quantityChange);
+        if (newQuantity.compareTo(BigDecimal.ZERO) < 0) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Adjustment would drive stock negative: on hand " + balance.getQuantityOnHand()
+                            + ", change " + quantityChange);
+        }
+        balance.setQuantityOnHand(newQuantity);
+        balanceRepository.save(balance);
+
+        InventoryMovement movement = new InventoryMovement();
+        movement.setBusinessId(businessId);
+        movement.setProductId(productId);
+        movement.setMovementType(movementType);
+        movement.setQuantityChange(quantityChange);
+        movement.setUnitCost(balance.getAverageUnitCost());
+        movement.setReferenceType("ADJUSTMENT");
+        movement.setNote(reason);
+        movement.setCreatedBy(createdByUserId);
+        movementRepository.save(movement);
+    }
+
+    /**
+     * Blueprint 3.6/8.2 weighted-average-cost receipt: lock the balance row
+     * FOR UPDATE, then newAvg = (qty x avg + received x unitCost) / newQty.
+     * The lock is the feature - without it two concurrent receipts calculate
+     * from the same old balance and one update is silently lost. Division is
+     * explicit scale-4 HALF_UP because non-terminating decimals throw.
+     *
+     * The balance row must exist (created at product creation); a missing row
+     * means data predating that invariant, and we reject loudly instead of
+     * locking a gap.
+     */
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void recordReceipt(Long businessId, za.co.salon.inventory.entity.PurchaseItem item, Long createdByUserId) {
+        ProductStockBalance balance = balanceRepository.findForUpdate(businessId, item.getProductId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                        "No stock balance row for product " + item.getProductId()
+                                + " - product predates the create-at-creation invariant"));
+
+        BigDecimal oldQuantity = balance.getQuantityOnHand();
+        BigDecimal received = item.getQuantity();
+        BigDecimal newQuantity = oldQuantity.add(received);
+        BigDecimal newAverage;
+        if (newQuantity.compareTo(BigDecimal.ZERO) == 0) {
+            newAverage = BigDecimal.ZERO;
+        } else {
+            BigDecimal oldValue = oldQuantity.multiply(balance.getAverageUnitCost());
+            BigDecimal receivedValue = received.multiply(item.getUnitCost());
+            newAverage = oldValue.add(receivedValue).divide(newQuantity, 4, RoundingMode.HALF_UP);
+        }
+        balance.setQuantityOnHand(newQuantity);
+        balance.setAverageUnitCost(newAverage);
+        balanceRepository.save(balance);
+
+        InventoryMovement movement = new InventoryMovement();
+        movement.setBusinessId(businessId);
+        movement.setProductId(item.getProductId());
+        movement.setMovementType(InventoryMovement.MovementType.PURCHASE_RECEIPT);
+        movement.setQuantityChange(received);
+        movement.setUnitCost(item.getUnitCost());
+        movement.setReferenceType("PURCHASE");
+        movement.setReferenceId(item.getPurchaseId());
+        movement.setCreatedBy(createdByUserId);
+        movementRepository.save(movement);
+    }
+
+    /**
      * Deducts sold quantities and writes movement audit rows. quantitiesByProductId
      * must already be sorted by product id - deterministic lock order is the
      * deadlock mitigation for concurrent completions.
