@@ -15,6 +15,8 @@ import za.co.salon.catalogue.entity.ProductCategory;
 import za.co.salon.catalogue.repository.ProductCategoryRepository;
 import za.co.salon.catalogue.repository.ProductRepository;
 import za.co.salon.catalogue.repository.TaxCodeRepository;
+import za.co.salon.inventory.entity.ProductStockBalance;
+import za.co.salon.inventory.repository.ProductStockBalanceRepository;
 import za.co.salon.shared.security.BusinessAuthorizationService;
 import za.co.salon.shared.security.BusinessContext;
 
@@ -33,17 +35,20 @@ public class ProductCatalogueService {
     private final ProductCategoryRepository categoryRepository;
     private final ProductRepository productRepository;
     private final TaxCodeRepository taxCodeRepository;
+    private final ProductStockBalanceRepository stockBalanceRepository;
     private final BusinessAuthorizationService authz;
     private final BusinessContext businessContext;
 
     public ProductCatalogueService(ProductCategoryRepository categoryRepository,
                                    ProductRepository productRepository,
                                    TaxCodeRepository taxCodeRepository,
+                                   ProductStockBalanceRepository stockBalanceRepository,
                                    BusinessAuthorizationService authz,
                                    BusinessContext businessContext) {
         this.categoryRepository = categoryRepository;
         this.productRepository = productRepository;
         this.taxCodeRepository = taxCodeRepository;
+        this.stockBalanceRepository = stockBalanceRepository;
         this.authz = authz;
         this.businessContext = businessContext;
     }
@@ -78,7 +83,17 @@ public class ProductCatalogueService {
         Product product = new Product();
         product.setBusinessId(businessContext.getBusinessId());
         applyProductRequest(product, request);
-        return toProductResponse(productRepository.save(product), categoryNameOf(product));
+        Product saved = productRepository.save(product);
+        // Blueprint 3.6: every product gets its zero balance row at creation, so
+        // the FOR UPDATE lock in stock movements always attaches to a real row -
+        // never to a gap. This is the ONLY place balance rows are born.
+        ProductStockBalance balance = new ProductStockBalance();
+        balance.setBusinessId(saved.getBusinessId());
+        balance.setProductId(saved.getId());
+        balance.setQuantityOnHand(java.math.BigDecimal.ZERO);
+        balance.setAverageUnitCost(java.math.BigDecimal.ZERO);
+        stockBalanceRepository.save(balance);
+        return toProductResponse(saved, categoryNameOf(saved));
     }
 
     @Transactional(readOnly = true)
